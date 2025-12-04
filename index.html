@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>PrimeGuard RSA (HTML版)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #f5f5f5;
+      color: #222;
+    }
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .radio-group {
+      display: flex;
+      gap: 1.5rem;
+      margin: 0.5rem 0 1rem;
+    }
+    .radio-group label {
+      cursor: pointer;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .col {
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+    select, input[type="text"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.4rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    button {
+      padding: 0.45rem 0.9rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      background: #2563eb;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .copy-btn {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.8rem;
+      margin-left: 0.4rem;
+    }
+    .field-line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+    }
+    .field-line span.label {
+      min-width: 6rem;
+      font-weight: 600;
+    }
+    .field-line span.value {
+      word-break: break-all;
+    }
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+    }
+    .msg.success {
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .msg.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 0.1rem 0.25rem;
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 1.2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>PrimeGuard RSA (HTML版)</h1>
+    <p>
+      RSA暗号では、まず 2 つの大きな素数 <code>p, q</code> を用意し、
+      <code>n = p × q</code> を計算して鍵を作ります。<br />
+      このページでは、A〜Z と 0〜9 の文字（最大5文字）を暗号化／復号できます。
+    </p>
+
+    <h3>役割を選択してください</h3>
+    <div class="radio-group">
+      <label><input type="radio" name="role" value="receiver" checked> 受信者</label>
+      <label><input type="radio" name="role" value="solo"> 一人で行う</label>
+    </div>
+  </div>
+
+  <!-- 受信者モード -->
+  <div class="card" id="receiver-section">
+    <h2>1. 鍵生成（受信者）</h2>
+    <p>p, q を選ぶと e が自動的に計算されます。</p>
+
+    <div class="row">
+      <div class="col">
+        <label for="recv-p">素数 p</label>
+        <select id="recv-p"></select>
+      </div>
+      <div class="col">
+        <label for="recv-q">素数 q</label>
+        <select id="recv-q"></select>
+      </div>
+      <div class="col">
+        <label>公開鍵 e（自動計算）</label>
+        <div id="recv-e-display"><code>未計算</code></div>
+      </div>
+    </div>
+
+    <button id="recv-generate-btn">鍵生成</button>
+    <div id="recv-generate-msg"></div>
+
+    <div id="recv-keys" style="margin-top:1rem; display:none;">
+      <div class="field-line">
+        <span class="label">公開鍵 n:</span>
+        <span class="value" id="recv-n"></span>
+        <button class="copy-btn secondary" data-copy-target="recv-n">Copy</button>
+      </div>
+      <div class="field-line">
+        <span class="label">公開鍵 e:</span>
+        <span class="value" id="recv-e"></span>
+        <button class="copy-btn secondary" data-copy-target="recv-e">Copy</button>
+      </div>
+      <div class="field-line">
+        <span class="label">秘密鍵 d:</span>
+        <span class="value" id="recv-d"></span>
+        <button class="copy-btn secondary" data-copy-target="recv-d">Copy</button>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2>2. 復号（受信者）</h2>
+    <p>秘密鍵 <code>(n, d)</code> と暗号文（Base64）を入力してください。</p>
+    <div class="row">
+      <div class="col">
+        <label for="dec-n">公開鍵 n</label>
+        <input type="text" id="dec-n" placeholder="n を貼り付け">
+      </div>
+      <div class="col">
+        <label for="dec-d">秘密鍵 d</label>
+        <input type="text" id="dec-d" placeholder="d を貼り付け">
+      </div>
+      <div class="col">
+        <label for="dec-c">暗号文 (Base64)</label>
+        <textarea id="dec-c" placeholder="暗号文を貼り付け"></textarea>
+      </div>
+    </div>
+    <button id="dec-btn">復号</button>
+    <div id="dec-msg"></div>
+  </div>
+
+  <!-- 一人で行うモード -->
+  <div class="card" id="solo-section" style="display:none;">
+    <h2>1. 鍵生成 → 2. 暗号化 → 3. 復号</h2>
+
+    <!-- 鍵生成 -->
+    <h3>1. 鍵生成</h3>
+    <div class="row">
+      <div class="col">
+        <label for="solo-p">素数 p</label>
+        <select id="solo-p"></select>
+      </div>
+      <div class="col">
+        <label for="solo-q">素数 q</label>
+        <select id="solo-q"></select>
+      </div>
+      <div class="col">
+        <label>公開鍵 e（自動計算）</label>
+        <div id="solo-e-display"><code>未計算</code></div>
+      </div>
+    </div>
+    <button id="solo-generate-btn">鍵生成</button>
+    <div id="solo-generate-msg"></div>
+
+    <div id="solo-keys" style="margin-top:1rem; display:none;">
+      <div class="field-line">
+        <span class="label">公開鍵 n:</span>
+        <span class="value" id="solo-n"></span>
+        <button class="copy-btn secondary" data-copy-target="solo-n">Copy</button>
+      </div>
+      <div class="field-line">
+        <span class="label">公開鍵 e:</span>
+        <span class="value" id="solo-e"></span>
+        <button class="copy-btn secondary" data-copy-target="solo-e">Copy</button>
+      </div>
+      <div class="field-line">
+        <span class="label">秘密鍵 d:</span>
+        <span class="value" id="solo-d"></span>
+        <button class="copy-btn secondary" data-copy-target="solo-d">Copy</button>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- 暗号化 -->
+    <h3>2. 暗号化</h3>
+    <div class="row">
+      <div class="col">
+        <label for="solo-enc-n">公開鍵 n</label>
+        <input type="text" id="solo-enc-n" placeholder="n を貼り付け">
+      </div>
+      <div class="col">
+        <label for="solo-enc-e">公開鍵 e</label>
+        <input type="text" id="solo-enc-e" placeholder="e を貼り付け">
+      </div>
+      <div class="col">
+        <label for="solo-plain">平文 (A〜Z, 0〜9 / 最大5文字)</label>
+        <input type="text" id="solo-plain" maxlength="5" placeholder="例: HELLO">
+      </div>
+    </div>
+    <button id="solo-enc-btn">暗号化</button>
+    <div id="solo-enc-output"></div>
+
+    <hr />
+
+    <!-- 復号 -->
+    <h3>3. 復号</h3>
+    <div class="row">
+      <div class="col">
+        <label for="solo-dec-n">公開鍵 n</label>
+        <input type="text" id="solo-dec-n" placeholder="n を貼り付け">
+      </div>
+      <div class="col">
+        <label for="solo-dec-d">秘密鍵 d</label>
+        <input type="text" id="solo-dec-d" placeholder="d を貼り付け">
+      </div>
+      <div class="col">
+        <label for="solo-dec-c">暗号文 (Base64)</label>
+        <textarea id="solo-dec-c" placeholder="暗号文を貼り付け"></textarea>
+      </div>
+    </div>
+    <button id="solo-dec-btn">復号</button>
+    <div id="solo-dec-msg"></div>
+  </div>
+
+  <script>
+    // ==== RSA の中身（JavaScript版） ====
+
+    const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const CHAR_TO_VAL = new Map();
+    const VAL_TO_CHAR = [];
+    for (let i = 0; i < ALPHABET.length; i++) {
+      CHAR_TO_VAL.set(ALPHABET[i], BigInt(i));
+      VAL_TO_CHAR.push(ALPHABET[i]);
+    }
+
+    // 素数生成（エラトステネス）
+    function generatePrimes(limit) {
+      const sieve = new Array(limit + 1).fill(true);
+      sieve[0] = sieve[1] = false;
+      for (let i = 2; i * i <= limit; i++) {
+        if (sieve[i]) {
+          for (let j = i * i; j <= limit; j += i) {
+            sieve[j] = false;
+          }
+        }
+      }
+      const res = [];
+      for (let i = 2; i <= limit; i++) {
+        if (sieve[i]) res.push(i);
+      }
+      return res;
+    }
+
+    // BigInt 用 GCD
+    function gcdBigInt(a, b) {
+      a = BigInt(a);
+      b = BigInt(b);
+      while (b !== 0n) {
+        const t = b;
+        b = a % b;
+        a = t;
+      }
+      return a < 0n ? -a : a;
+    }
+
+    // 拡張ユークリッド互除法
+    function egcd(a, b) {
+      if (b === 0n) {
+        return { x: 1n, y: 0n, g: a };
+      }
+      const result = egcd(b, a % b);
+      const x1 = result.x;
+      const y1 = result.y;
+      const g = result.g;
+      return { x: y1, y: x1 - (a / b) * y1, g: g };
+    }
+
+    // 逆元 a^-1 mod m
+    function modInverse(a, m) {
+      a = BigInt(a);
+      m = BigInt(m);
+      const { x, g } = egcd(a, m);
+      if (g !== 1n) return null;
+      let res = x % m;
+      if (res < 0n) res += m;
+      return res;
+    }
+
+    // 繰り返し二乗法で pow(base, exp) mod mod
+    function modPow(base, exp, mod) {
+      base = base % mod;
+      let result = 1n;
+      while (exp > 0n) {
+        if (exp & 1n) {
+          result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp >>= 1n;
+      }
+      return result;
+    }
+
+    // e の自動選択（5001〜5999で φ と互いに素 & p, q 以外）
+    function autoSelectE(phi, p, q) {
+      phi = BigInt(phi);
+      p = BigInt(p);
+      q = BigInt(q);
+      for (let i = 5001n; i < 6000n; i++) {
+        if (gcdBigInt(i, phi) === 1n && i !== p && i !== q) {
+          return i;
+        }
+      }
+      return null;
+    }
+
+    // BigInt → 指定バイト長 Uint8Array (big-endian)
+    function bigIntToBytes(num, size) {
+      let n = BigInt(num);
+      const bytes = new Uint8Array(size);
+      for (let i = size - 1; i >= 0; i--) {
+        bytes[i] = Number(n & 0xffn);
+        n >>= 8n;
+      }
+      return bytes;
+    }
+
+    // Uint8Array → BigInt（big-endian）
+    function bytesToBigInt(bytes) {
+      let n = 0n;
+      for (let i = 0; i < bytes.length; i++) {
+        n = (n << 8n) + BigInt(bytes[i]);
+      }
+      return n;
+    }
+
+    // Base64 変換
+    function bytesToBase64(bytes) {
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(b64) {
+      const binary = atob(b64.trim());
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // 暗号化
+    function encryptBlocks(plaintext, n, e) {
+      n = BigInt(n);
+      e = BigInt(e);
+      const bitLen = n.toString(2).length;
+      const size = Math.ceil(bitLen / 8); // バイト長
+      const allBytes = [];
+      for (let c of plaintext) {
+        const v = CHAR_TO_VAL.get(c);
+        if (v === undefined) {
+          throw new Error("サポートされていない文字が含まれています。");
+        }
+        const cval = modPow(v, e, n);
+        const blockBytes = bigIntToBytes(cval, size);
+        for (let b of blockBytes) {
+          allBytes.push(b);
+        }
+      }
+      return bytesToBase64(new Uint8Array(allBytes));
+    }
+
+    // 復号
+    function decryptBlocks(b64, n, d) {
+      n = BigInt(n);
+      d = BigInt(d);
+      const bytes = base64ToBytes(b64);
+      const bitLen = n.toString(2).length;
+      const size = Math.ceil(bitLen / 8);
+      if (size === 0 || bytes.length % size !== 0) {
+        throw new Error("ブロック長が一致しません（鍵 n が違う可能性）。");
+      }
+      let result = "";
+      for (let i = 0; i < bytes.length; i += size) {
+        const block = bytes.slice(i, i + size);
+        const m = modPow(bytesToBigInt(block), d, n);
+        if (m < 0n || m >= BigInt(ALPHABET.length)) {
+          throw new Error("復号値が想定範囲外です（鍵の組み合わせを確認）。");
+        }
+        result += VAL_TO_CHAR[Number(m)];
+      }
+      return result;
+    }
+
+    // ==== UI 初期化 ====
+
+    // 素数リスト（5000〜6000）
+    const primes = generatePrimes(6000).filter(p => p >= 5000 && p <= 6000);
+
+    function fillPrimeSelect(selectId) {
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = "";
+      for (const p of primes) {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        sel.appendChild(opt);
+      }
+    }
+
+    fillPrimeSelect("recv-p");
+    fillPrimeSelect("recv-q");
+    fillPrimeSelect("solo-p");
+    fillPrimeSelect("solo-q");
+
+    // 役割切り替え
+    const receiverSection = document.getElementById("receiver-section");
+    const soloSection = document.getElementById("solo-section");
+
+    document.querySelectorAll('input[name="role"]').forEach(radio => {
+      radio.addEventListener("change", () => {
+        if (radio.checked && radio.value === "receiver") {
+          receiverSection.style.display = "";
+          soloSection.style.display = "none";
+        } else if (radio.checked && radio.value === "solo") {
+          receiverSection.style.display = "none";
+          soloSection.style.display = "";
+        }
+      });
+    });
+
+    // ==== 受信者モードの処理 ====
+    let recvN = null;
+    let recvE = null;
+    let recvD = null;
+
+    function updateRecvEDisplay() {
+      const p = Number(document.getElementById("recv-p").value);
+      const q = Number(document.getElementById("recv-q").value);
+      const eDiv = document.getElementById("recv-e-display");
+      if (p === q) {
+        eDiv.innerHTML = "<code>p と q は異なる素数を選んでください。</code>";
+        return;
+      }
+      const phi = BigInt(p - 1) * BigInt(q - 1);
+      const e = autoSelectE(phi, p, q);
+      if (e === null) {
+        eDiv.innerHTML = "<code>条件を満たす e がありません。</code>";
+      } else {
+        eDiv.innerHTML = "<code>" + e.toString() + "</code>";
+      }
+    }
+
+    document.getElementById("recv-p").addEventListener("change", updateRecvEDisplay);
+    document.getElementById("recv-q").addEventListener("change", updateRecvEDisplay);
+    updateRecvEDisplay();
+
+    document.getElementById("recv-generate-btn").addEventListener("click", () => {
+      const msgDiv = document.getElementById("recv-generate-msg");
+      msgDiv.innerHTML = "";
+      const p = Number(document.getElementById("recv-p").value);
+      const q = Number(document.getElementById("recv-q").value);
+      if (p === q) {
+        msgDiv.innerHTML = '<div class="msg error">p と q は異なる素数を選んでください。</div>';
+        return;
+      }
+      const phi = BigInt(p - 1) * BigInt(q - 1);
+      const e = autoSelectE(phi, p, q);
+      if (e === null) {
+        msgDiv.innerHTML = '<div class="msg error">e が求まりません。p, q を変更してください。</div>';
+        return;
+      }
+      const n = BigInt(p) * BigInt(q);
+      const d = modInverse(e, phi);
+      if (d === null) {
+        msgDiv.innerHTML = '<div class="msg error">d（逆元）が求まりませんでした。</div>';
+        return;
+      }
+      recvN = n;
+      recvE = e;
+      recvD = d;
+      document.getElementById("recv-n").textContent = n.toString();
+      document.getElementById("recv-e").textContent = e.toString();
+      document.getElementById("recv-d").textContent = d.toString();
+      document.getElementById("recv-keys").style.display = "";
+      msgDiv.innerHTML = '<div class="msg success">鍵生成完了。上の値をコピーして利用できます。</div>';
+
+      // 復号欄にも自動でセット
+      document.getElementById("dec-n").value = n.toString();
+      document.getElementById("dec-d").value = d.toString();
+    });
+
+    // 受信者モードの復号
+    document.getElementById("dec-btn").addEventListener("click", () => {
+      const nStr = document.getElementById("dec-n").value.trim();
+      const dStr = document.getElementById("dec-d").value.trim();
+      const cStr = document.getElementById("dec-c").value.trim();
+      const msgDiv = document.getElementById("dec-msg");
+      msgDiv.innerHTML = "";
+      try {
+        if (!nStr || !dStr || !cStr) {
+          throw new Error("n, d, 暗号文をすべて入力してください。");
+        }
+        const n = BigInt(nStr);
+        const d = BigInt(dStr);
+        const plain = decryptBlocks(cStr, n, d);
+        msgDiv.innerHTML = '<div class="msg success">復号結果: ' + plain + '</div>';
+      } catch (e) {
+        msgDiv.innerHTML = '<div class="msg error">復号に失敗しました: ' + e.message + '</div>';
+      }
+    });
+
+    // ==== 一人で行うモードの処理 ====
+    let soloN = null;
+    let soloE = null;
+    let soloD = null;
+
+    function updateSoloEDisplay() {
+      const p = Number(document.getElementById("solo-p").value);
+      const q = Number(document.getElementById("solo-q").value);
+      const eDiv = document.getElementById("solo-e-display");
+      if (p === q) {
+        eDiv.innerHTML = "<code>p と q は異なる素数を選んでください。</code>";
+        return;
+      }
+      const phi = BigInt(p - 1) * BigInt(q - 1);
+      const e = autoSelectE(phi, p, q);
+      if (e === null) {
+        eDiv.innerHTML = "<code>条件を満たす e がありません。</code>";
+      } else {
+        eDiv.innerHTML = "<code>" + e.toString() + "</code>";
+      }
+    }
+
+    document.getElementById("solo-p").addEventListener("change", updateSoloEDisplay);
+    document.getElementById("solo-q").addEventListener("change", updateSoloEDisplay);
+    updateSoloEDisplay();
+
+    document.getElementById("solo-generate-btn").addEventListener("click", () => {
+      const msgDiv = document.getElementById("solo-generate-msg");
+      msgDiv.innerHTML = "";
+      const p = Number(document.getElementById("solo-p").value);
+      const q = Number(document.getElementById("solo-q").value);
+      if (p === q) {
+        msgDiv.innerHTML = '<div class="msg error">p と q は異なる素数を選んでください。</div>';
+        return;
+      }
+      const phi = BigInt(p - 1) * BigInt(q - 1);
+      const e = autoSelectE(phi, p, q);
+      if (e === null) {
+        msgDiv.innerHTML = '<div class="msg error">e が求まりません。p, q を変更してください。</div>';
+        return;
+      }
+      const n = BigInt(p) * BigInt(q);
+      const d = modInverse(e, phi);
+      if (d === null) {
+        msgDiv.innerHTML = '<div class="msg error">d（逆元）が求まりませんでした。</div>';
+        return;
+      }
+      soloN = n;
+      soloE = e;
+      soloD = d;
+      document.getElementById("solo-n").textContent = n.toString();
+      document.getElementById("solo-e").textContent = e.toString();
+      document.getElementById("solo-d").textContent = d.toString();
+      document.getElementById("solo-keys").style.display = "";
+      msgDiv.innerHTML = '<div class="msg success">鍵生成完了。以下の値を使って暗号化・復号ができます。</div>';
+
+      // 暗号化／復号欄にも自動セット
+      document.getElementById("solo-enc-n").value = n.toString();
+      document.getElementById("solo-enc-e").value = e.toString();
+      document.getElementById("solo-dec-n").value = n.toString();
+      document.getElementById("solo-dec-d").value = d.toString();
+    });
+
+    // 一人で行う：暗号化
+    document.getElementById("solo-enc-btn").addEventListener("click", () => {
+      const nStr = document.getElementById("solo-enc-n").value.trim();
+      const eStr = document.getElementById("solo-enc-e").value.trim();
+      const plainInput = document.getElementById("solo-plain").value.trim();
+      const outDiv = document.getElementById("solo-enc-output");
+      outDiv.innerHTML = "";
+      try {
+        if (!nStr || !eStr) {
+          throw new Error("n と e を入力してください（鍵生成ボタンで自動入力されます）。");
+        }
+        let plain = (plainInput || "").toUpperCase();
+        if (!/^[A-Z0-9]{1,5}$/.test(plain)) {
+          throw new Error("平文は A〜Z と 0〜9 のみ、1〜5文字で入力してください。");
+        }
+        const n = BigInt(nStr);
+        const e = BigInt(eStr);
+        const b64 = encryptBlocks(plain, n, e);
+        outDiv.innerHTML =
+          '<div class="msg success">' +
+          '暗号文 (Base64):<br><code>' + b64 + '</code>' +
+          "</div>";
+        // 復号欄へもコピー
+        document.getElementById("solo-dec-c").value = b64;
+      } catch (e) {
+        outDiv.innerHTML = '<div class="msg error">暗号化に失敗しました: ' + e.message + '</div>';
+      }
+    });
+
+    // 一人で行う：復号
+    document.getElementById("solo-dec-btn").addEventListener("click", () => {
+      const nStr = document.getElementById("solo-dec-n").value.trim();
+      const dStr = document.getElementById("solo-dec-d").value.trim();
+      const cStr = document.getElementById("solo-dec-c").value.trim();
+      const msgDiv = document.getElementById("solo-dec-msg");
+      msgDiv.innerHTML = "";
+      try {
+        if (!nStr || !dStr || !cStr) {
+          throw new Error("n, d, 暗号文をすべて入力してください。");
+        }
+        const n = BigInt(nStr);
+        const d = BigInt(dStr);
+        const plain = decryptBlocks(cStr, n, d);
+        msgDiv.innerHTML = '<div class="msg success">復号結果: ' + plain + '</div>';
+      } catch (e) {
+        msgDiv.innerHTML = '<div class="msg error">復号に失敗しました: ' + e.message + '</div>';
+      }
+    });
+
+    // Copy ボタン
+    document.querySelectorAll(".copy-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-copy-target");
+        const el = document.getElementById(targetId);
+        const text = el ? el.textContent.trim() : "";
+        if (!text) return;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).catch(() => {});
+        } else {
+          // 古いブラウザ向けフォールバック
+          const temp = document.createElement("textarea");
+          temp.value = text;
+          document.body.appendChild(temp);
+          temp.select();
+          try { document.execCommand("copy"); } catch (_) {}
+          document.body.removeChild(temp);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
