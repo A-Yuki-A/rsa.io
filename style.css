@@ -18,7 +18,7 @@ body {
 
 .header h1 {
     margin: 0 0 0.5rem 0;
-    font-size: 1.8rem;
+    font-size: 1.9rem;
 }
 
 .header p {
@@ -51,12 +51,42 @@ body {
     margin-top: 1rem;
 }
 
+/* RSA前提のボックス */
+.rsa-note {
+    background: #f3f4f6;
+    border-radius: 6px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.rsa-note-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rsa-note ol {
+    margin: 0.25rem 0 0.5rem 1.2rem;
+    padding: 0;
+}
+
+.rsa-note-list {
+    margin: 0.25rem 0 0;
+    padding-left: 1.2rem;
+    font-size: 0.85rem;
+}
+
+.rsa-note-list li {
+    margin-bottom: 0.15rem;
+}
+
 /* 役割選択 */
 .role-select {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 
 .role-option {
@@ -74,11 +104,16 @@ body {
     margin: 0;
 }
 
-/* フォーム系 */
-.grid-3 {
+/* グリッドレイアウト */
+.grid-2 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* フォーム */
+.form-group {
     margin-bottom: 0.75rem;
 }
 
@@ -128,7 +163,7 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* コピー用ボタン（小さめ） */
+/* コピー用ボタン */
 .copy-btn {
     margin-left: 0.5rem;
     padding: 0.25rem 0.6rem;
@@ -167,6 +202,12 @@ button:disabled {
     background: #f3f4f6;
 }
 
+.small-note {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 0.4rem;
+}
+
 /* メッセージ */
 .message {
     margin-top: 0.5rem;
@@ -187,7 +228,7 @@ button:disabled {
     color: #992525;
 }
 
-/* 簡易インラインコード表示 */
+/* インラインコード */
 .inline-code {
     display: inline-block;
     padding: 0.1rem 0.35rem;
@@ -196,21 +237,6 @@ button:disabled {
     font-family: "Source Han Code JP", "SFMono-Regular", Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
     font-size: 0.85rem;
-}
-
-/* コードブロック（解説用に残しておくなら） */
-pre {
-    background: #111827;
-    color: #f9fafb;
-    padding: 1rem;
-    border-radius: 6px;
-    overflow-x: auto;
-    font-size: 0.9rem;
-}
-
-code {
-    font-family: "Source Han Code JP", "SFMono-Regular", Menlo, Monaco, Consolas,
-        "Liberation Mono", "Courier New", monospace;
 }
 
 /* フッター */
