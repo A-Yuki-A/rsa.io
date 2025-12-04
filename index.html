@@ -20,19 +20,21 @@
 
             <!-- ★ ここを追加 ★ -->
             <div class="rsa-note">
-                <p class="rsa-note-title">このツールで使う RSA の前提</p>
-                <ol>
-                    <li>暗号化する側に渡されるのは公開鍵 <code>n, e</code> のみ。</li>
-                    <li><code>p, q, e</code> の 3 つの数が分かると、暗号文を復号できる。</li>
-                    <li><code>n = p × q</code> ただし <code>p, q</code> は素数。</li>
-                </ol>
-                <p class="rsa-note-sub">
-                    <strong>e の求め方：</strong>
-                    まず <code>φ(n) = (p - 1)(q - 1)</code> を計算し、
-                    <code>1 &lt; e &lt; φ(n)</code> の範囲で <code>φ(n)</code> と互いに素な整数を選びます。
-                    このツールでは、<code>5001〜5999</code> の中から自動的にそのような e を探しています。
-                </p>
-            </div>
+    <p class="rsa-note-title">このツールで使う RSA の前提</p>
+    <ol>
+        <li>暗号化する側に渡されるのは公開鍵 <code>n, e</code> のみ。</li>
+        <li><code>p, q, e</code> の 3 つの数が分かると、暗号文を復号できる。</li>
+        <li><code>n = p × q</code> ただし <code>p, q</code> は素数。</li>
+    </ol>
+
+    <p class="rsa-note-title" style="margin-top:0.5rem;">e の求め方</p>
+    <ul class="rsa-note-list">
+        <li><code>φ(n) = (p - 1)(q - 1)</code> を計算する。</li>
+        <li><code>1 &lt; e &lt; φ(n)</code> の範囲から候補となる整数を考える。</li>
+        <li><code>e</code> と <code>φ(n)</code> が「互いに素」（<code>gcd(e, φ(n)) = 1</code>）になるものを選ぶ。</li>
+        <li>このツールでは、<code>5001〜5999</code> の中から、その条件を満たす <code>e</code> を自動で探して選んでいます。</li>
+    </ul>
+</div>
             <!-- ★ 追加ここまで ★ -->
 
             <div class="role-select">
